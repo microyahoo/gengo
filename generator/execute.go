@@ -217,6 +217,7 @@ func (c *Context) ExecutePackage(outDir string, p Package) error {
 	klog.V(2).Infof("Processing package %q, disk location %q", p.Name(), path)
 	// Filter out any types the *package* doesn't care about.
 	packageContext := c.filteredBy(p.Filter)
+	// fmt.Printf("Order = %+v, len(Order) = %+v\n", packageContext.Order, len(packageContext.Order))
 	os.MkdirAll(path, 0755)
 	files := map[string]*File{}
 	for _, g := range p.Generators(packageContext) {
@@ -248,6 +249,7 @@ func (c *Context) ExecutePackage(outDir string, p Package) error {
 			}
 		}
 
+		// fmt.Printf("\n***file = %#v\n", f)
 		if vars := g.PackageVars(genContext); len(vars) > 0 {
 			addIndentHeaderComment(&f.Vars, "Package-wide variables from generator %q.", g.Name())
 			for _, v := range vars {

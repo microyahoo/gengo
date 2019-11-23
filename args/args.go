@@ -137,6 +137,7 @@ func (g *GeneratorArgs) NewBuilder() (*parser.Builder, error) {
 	// Ignore all auto-generated files.
 	b.AddBuildTags(g.GeneratedBuildTag)
 
+	// fmt.Printf("**#inputDirs = %+v, %+v\n", g.InputDirs, g)
 	for _, d := range g.InputDirs {
 		var err error
 		if strings.HasSuffix(d, "/...") {
@@ -197,13 +198,16 @@ func (g *GeneratorArgs) Execute(nameSystems namer.NameSystems, defaultSystem str
 	// pass through the flag on whether to include *_test.go files
 	b.IncludeTestFiles = g.IncludeTestFiles
 
+	// fmt.Printf("$$$$$$$$$Builder = %+v\n", b)
 	c, err := generator.NewContext(b, nameSystems, defaultSystem)
 	if err != nil {
 		return fmt.Errorf("Failed making a context: %v", err)
 	}
 
 	c.Verify = g.VerifyOnly
+	// fmt.Printf("***# context = %+v\n", c)
 	packages := pkgs(c, g)
+	// fmt.Printf("###packages = %+v\n", packages)
 	if err := c.ExecutePackages(g.OutputBase, packages); err != nil {
 		return fmt.Errorf("Failed executing generator: %v", err)
 	}

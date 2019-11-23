@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/constant"
 	"go/parser"
 	"go/token"
 	tc "go/types"
@@ -70,6 +71,16 @@ type Builder struct {
 
 	// map of package to list of packages it imports.
 	importGraph map[importPathString]map[string]struct{}
+
+	// map of file name to the scope of declarations
+	declScopes map[string][]declScope
+
+	// map of file name to line of comments
+	commentLines map[string][]int
+}
+
+type declScope struct {
+	begin, end int
 }
 
 // parsedFile is for tracking files with name
@@ -82,6 +93,8 @@ type parsedFile struct {
 type fileLine struct {
 	file string
 	line int
+	// posFile string
+	// pos     int
 }
 
 // New constructs a new builder.
@@ -108,6 +121,8 @@ func New() *Builder {
 		userRequested:         map[importPathString]bool{},
 		endLineToCommentGroup: map[fileLine]*ast.CommentGroup{},
 		importGraph:           map[importPathString]map[string]struct{}{},
+		declScopes:            map[string][]declScope{},
+		commentLines:          map[string][]int{},
 	}
 }
 
@@ -193,10 +208,22 @@ func (b *Builder) addFile(pkgPath importPathString, path string, src []byte, use
 	b.userRequested[pkgPath] = userRequested || b.userRequested[pkgPath]
 
 	b.parsed[pkgPath] = append(b.parsed[pkgPath], parsedFile{path, p})
-	for _, c := range p.Comments {
-		position := b.fset.Position(c.End())
-		b.endLineToCommentGroup[fileLine{position.Filename, position.Line}] = c
+	for _, d := range p.Decls {
+		position := b.fset.Position(d.Pos())
+		endPosition := b.fset.Position(d.End())
+		b.declScopes[position.Filename] = append(b.declScopes[position.Filename],
+			declScope{position.Line, endPosition.Line})
 	}
+	for _, c := range p.Comments {
+		// position := b.fset.Position(c.Pos())
+		endPosition := b.fset.Position(c.End())
+		b.endLineToCommentGroup[fileLine{endPosition.Filename, endPosition.Line}] = c
+		b.commentLines[endPosition.Filename] = append(b.commentLines[endPosition.Filename], endPosition.Line)
+	}
+	// fmt.Printf("***# builder.endLineToCommentGroup = %+v\n", b.endLineToCommentGroup)
+	// fmt.Printf("***# builder.declScopes = %+v\n", b.declScopes)
+	// fmt.Printf("***# builder.commentLines = %+v\n", b.commentLines)
+	// os.Exit(0)
 
 	// We have to get the packages from this specific file, in case the
 	// user added individual files instead of entire directories.
@@ -317,6 +344,7 @@ func (b *Builder) addDir(dir string, userRequested bool) error {
 		files = append(files, buildPkg.TestGoFiles...)
 	}
 
+	// fmt.Printf("**files=%+v\n", files)
 	for _, file := range files {
 		if !strings.HasSuffix(file, ".go") {
 			continue
@@ -517,6 +545,7 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 	}
 
 	s := pkg.Scope()
+	// fmt.Printf("**Scope.Names = %+v\n", s.Names())
 	for _, n := range s.Names() {
 		obj := s.Lookup(n)
 		tn, ok := obj.(*tc.TypeName)
@@ -546,11 +575,30 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 		}
 		tv, ok := obj.(*tc.Var)
 		if ok && !tv.IsField() {
-			b.addVariable(*u, nil, tv)
+			t := b.addVariable(*u, nil, tv)
+			c1 := b.parseCommentLines(obj.Pos())
+			// fmt.Printf("=======c1 = %+v, comments = %+v\n", c1, c1.Text())
+			t.CommentLines = splitLines(c1.Text())
 		}
 		tconst, ok := obj.(*tc.Const)
 		if ok {
-			b.addConstant(*u, nil, tconst)
+			// // the sub module of rbd
+			// // +ErrCode=ARbd
+			// const (
+			//     ErrCodeRbdCommon = iota + 1
+			//     ErrCodeRbdVolume
+			//     ErrCodeRbdSnapshot
+			//     ErrCodeRbdVolumeMigration
+			//     ErrCodeRbdReplication
+			//     ErrCodeRbdTrash
+			// )
+
+			// fmt.Printf("\n\n*****tconst = %#v\n", tconst)
+			t := b.addConstant(*u, nil, tconst)
+			c1 := b.parseCommentLines(obj.Pos())
+			// comments := splitLines(c1.Text())
+			// fmt.Printf("***Comments = %+v, len(comments) = %v\n", comments, len(comments))
+			t.CommentLines = splitLines(c1.Text())
 		}
 	}
 
@@ -582,6 +630,40 @@ func (b *Builder) importWithMode(dir string, mode build.ImportMode) (*build.Pack
 		return nil, err
 	}
 	return buildPkg, nil
+}
+
+// if there's a comment on the line `lines` before pos, return its text, otherwise "".
+func (b *Builder) parseCommentLines(pos token.Pos) *ast.CommentGroup {
+	position := b.fset.Position(pos)
+	key := fileLine{position.Filename, position.Line - 1}
+	cg := b.endLineToCommentGroup[key]
+	if cg == nil {
+		line := b.findCommentLine(position.Filename, position.Line)
+		key = fileLine{position.Filename, line}
+		cg = b.endLineToCommentGroup[key]
+	}
+	return cg
+}
+
+func (b *Builder) findCommentLine(fileName string, line int) int {
+	var scope declScope
+	if scopes, ok := b.declScopes[fileName]; ok {
+		for _, scope = range scopes {
+			if line >= scope.begin && line <= scope.end {
+				break
+			}
+		}
+		// fmt.Printf("***!!!Failed to find declaration scope of %s in line %d\n", fileName, line)
+	}
+	if commentLines, ok := b.commentLines[fileName]; ok {
+		// comments on the previous line of declartion scope
+		for _, l := range commentLines {
+			if scope.begin-1 == l {
+				return l
+			}
+		}
+	}
+	return -1
 }
 
 // if there's a comment on the line `lines` before pos, return its text, otherwise "".
@@ -652,6 +734,7 @@ func (b *Builder) convertSignature(u types.Universe, t *tc.Signature) *types.Sig
 // walkType adds the type, and any necessary child types.
 func (b *Builder) walkType(u types.Universe, useName *types.Name, in tc.Type) *types.Type {
 	// Most of the cases are underlying types of the named type.
+	// fmt.Printf("***tc.Type.String = %#v, %v\n", in, in.String())
 	name := tcNameToName(in.String())
 	if useName != nil {
 		name = *useName
@@ -827,9 +910,12 @@ func (b *Builder) addConstant(u types.Universe, useName *types.Name, in *tc.Cons
 	if useName != nil {
 		name = *useName
 	}
+	// fmt.Printf("$$$$#### name = %#v\n", name)
 	out := u.Constant(name)
 	out.Kind = types.DeclarationOf
 	out.Underlying = b.walkType(u, nil, in.Type())
+	out.ConstValue = constant.Val(in.Val())
+	// fmt.Printf("$$$$#### out = %#v, underlying = %#v, constValue = %#v, %T\n", out, out.Underlying, out.ConstValue, out.ConstValue)
 	return out
 }
 

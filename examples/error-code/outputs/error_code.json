@@ -1,0 +1,185 @@
+{
+	"01-01-0001": {
+		"desc": "CommonUnspecifiedError"
+	},
+	"01-01-0002": {
+		"desc": "CommonJSONUnmarshalError"
+	},
+	"01-01-0003": {
+		"desc": "CommonJSONMarshalError"
+	},
+	"01-01-0004": {
+		"desc": "CommonJSONParseError"
+	},
+	"01-01-0005": {
+		"desc": "CommonNotFound"
+	},
+	"01-01-0006": {
+		"desc": "CommonStrConversion"
+	},
+	"01-01-0007": {
+		"desc": "CommonReadIOError"
+	},
+	"01-01-0008": {
+		"desc": "CommonResourceExist"
+	},
+	"01-01-0009": {
+		"desc": "CommonTimeout"
+	},
+	"02-01-0001": {
+		"desc": "RbdCommonUnspecifiedError"
+	},
+	"02-02-0001": {
+		"desc": "RbdVolumeUnspecifiedError"
+	},
+	"02-02-0002": {
+		"desc": "RbdVolumeResourceBusy"
+	},
+	"02-02-0003": {
+		"desc": "RbdVolumeResourceExist"
+	},
+	"02-02-0004": {
+		"desc": "RbdVolumeUnknownParameter"
+	},
+	"02-02-0005": {
+		"desc": "RbdVolumeNoEntry"
+	},
+	"02-03-0001": {
+		"desc": "RbdSnapshotUnspecifiedError"
+	},
+	"02-03-0002": {
+		"desc": "RbdSnapshotResourceBusy"
+	},
+	"02-03-0003": {
+		"desc": "RbdSnapshotResourceExist"
+	},
+	"02-03-0004": {
+		"desc": "RbdSnapshotUnknownParameter"
+	},
+	"02-03-0005": {
+		"desc": "RbdSnapshotNoEntry"
+	},
+	"02-04-0001": {
+		"desc": "RbdVolumeMigrationUnspecifiedError"
+	},
+	"02-04-0002": {
+		"desc": "RbdVolumeMigrationResourceBusy"
+	},
+	"02-04-0003": {
+		"desc": "RbdVolumeMigrationResourceExist"
+	},
+	"02-04-0004": {
+		"desc": "RbdVolumeMigrationUnknownParameter"
+	},
+	"02-04-0005": {
+		"desc": "RbdVolumeMigrationInvalidArgument"
+	},
+	"02-04-0006": {
+		"desc": "RbdVolumeMigrationNoEntry"
+	},
+	"02-05-0001": {
+		"desc": "RbdReplicationUnspecifiedError"
+	},
+	"02-06-0001": {
+		"desc": "RbdTrashUnspecifiedError"
+	},
+	"02-06-0002": {
+		"desc": "RbdTrashResourceBusy"
+	},
+	"02-06-0003": {
+		"desc": "RbdTrashResourceExist"
+	},
+	"02-06-0004": {
+		"desc": "RbdTrashInvalidArgument"
+	},
+	"02-06-0005": {
+		"desc": "RbdTrashNoEntry"
+	},
+	"0E-01-0001": {
+		"desc": "XdcCommonUnspecifiedError"
+	},
+	"0E-02-0001": {
+		"desc": "XdcAccessPathUnspecifiedError"
+	},
+	"0E-03-0001": {
+		"desc": "XdcTargetUnspecifiedError"
+	},
+	"0E-04-0001": {
+		"desc": "XdcCHAPUnspecifiedError"
+	},
+	"0E-05-0001": {
+		"desc": "XdcLunUnspecifiedError"
+	},
+	"0E-06-0001": {
+		"desc": "XdcClientUnspecifiedError"
+	},
+	"12-01-0001": {
+		"desc": "OSCommonUnspecifiedError"
+	},
+	"13-01-0001": {
+		"desc": "EtcdCommonUnspecifiedError"
+	},
+	"13-02-0001": {
+		"desc": "EtcdInstallationUnspecifiedError"
+	},
+	"15-01-0001": {
+		"desc": "HTTPCommonUnspecifiedError"
+	},
+	"15-01-0002": {
+		"desc": "HTTPCommonInvalidCredential"
+	},
+	"15-01-0003": {
+		"desc": "HTTPCommonRequestError"
+	},
+	"15-01-0004": {
+		"desc": "HTTPCommonParseURLError"
+	},
+	"16-01-0001": {
+		"desc": "RPCCommonUnspecifiedError"
+	},
+	"16-01-0002": {
+		"desc": "RPCCommonHostDown"
+	},
+	"16-01-0003": {
+		"desc": "RPCCommonConnectionFailed"
+	},
+	"18-01-0001": {
+		"desc": "TaskCommonUnspecifiedError"
+	},
+	"18-01-0002": {
+		"desc": "TaskCommonXDCException"
+	},
+	"18-01-0003": {
+		"desc": "TaskCommonDead"
+	},
+	"18-02-0001": {
+		"desc": "TaskVolumeUnspecifiedError"
+	},
+	"18-02-0002": {
+		"desc": "TaskVolumeInvalidMigrationStatus"
+	},
+	"18-02-0003": {
+		"desc": "TaskVolumeMigrationError"
+	},
+	"18-02-0004": {
+		"desc": "TaskVolumeStatusMismatch"
+	},
+	"18-02-0005": {
+		"desc": "TaskVolumeMigrationStatusMismatch"
+	},
+	"18-02-0006": {
+		"desc": "TaskVolumeTrashResourceStatusMismatch"
+	},
+	"18-02-0007": {
+		"desc": "TaskVolumeReplicationStatusError"
+	},
+	"18-02-0008": {
+		"desc": "TaskVolumeSnapshotsAttachedError"
+	},
+	"18-03-0001": {
+		"desc": "TaskSnapshotUnspecifiedError"
+	},
+	"18-03-0002": {
+		"desc": "TaskSnapshotStatusMismatch"
+	}
+}

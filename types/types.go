@@ -16,7 +16,9 @@ limitations under the License.
 
 package types
 
-import "strings"
+import (
+	"strings"
+)
 
 // Ref makes a reference to the given type. It can only be used for e.g.
 // passing to namers.
@@ -340,6 +342,9 @@ type Type struct {
 
 	// If Kind == func, this is the signature of the function.
 	Signature *Signature
+
+	// If Kind == DeclarationOf and const type
+	ConstValue interface{}
 
 	// TODO: Add:
 	// * channel direction
