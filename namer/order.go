@@ -17,7 +17,6 @@ limitations under the License.
 package namer
 
 import (
-	// "fmt"
 	"sort"
 
 	"k8s.io/gengo/types"
@@ -35,7 +34,6 @@ func (o *Orderer) OrderUniverse(u types.Universe) []*types.Type {
 		namer: o.Namer,
 	}
 	for _, p := range u {
-		// fmt.Printf("*#@ universe packages: %+v, %+v\n", k, p)
 		for _, t := range p.Types {
 			list.types = append(list.types, t)
 		}

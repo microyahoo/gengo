@@ -1,4 +1,4 @@
-// Package generators has the generators for the set-gen utility.
+// Package generators has the generators for the error-code utility.
 package generators
 
 import (
@@ -14,7 +14,6 @@ import (
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
-	// "k8s.io/klog"
 )
 
 const (
@@ -53,10 +52,6 @@ func DefaultNameSystem() string {
 
 // Packages makes the sets package definition.
 func Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
-	// boilerplate, err := arguments.LoadGoBoilerplate()
-	// if err != nil {
-	// 	klog.Fatalf("Failed loading boilerplate: %v", err)
-	// }
 	context.FileTypes = map[string]generator.FileType{
 		jsonFileType: jsonFile{
 			c:        context,
@@ -66,18 +61,11 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 	}
 
 	return generator.Packages{&generator.DefaultPackage{
-		PackageName: "codes",
 		PackagePath: arguments.OutputPackagePath,
-		// HeaderText:  boilerplate,
-		// PackageDocumentation: []byte(
-		// 	`// Package codes has auto-generated set types.
-		// `),
 
 		// GeneratorFunc returns a list of generators. Each generator makes a
 		// single file.
 		GeneratorFunc: func(c *generator.Context) (generators []generator.Generator) {
-			// fmt.Printf("***generator.Context = %+v\n", c)
-
 			// Since we want a file per type that we generate a set for, we
 			// have to provide a function for this.
 			generators = append(generators, &errCodeGen{
@@ -91,15 +79,12 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 			// It would be reasonable to filter by the type's package here.
 			// It might be necessary if your input directory has a big
 			// import graph.
-			// fmt.Printf("**t.Name = %+v, t.Kind = %+v, t.CommentLines = %v, t.SecondClosestCommentLines = %v\n",
-			// t.Name, t.Kind, t.CommentLines, t.SecondClosestCommentLines)
 			switch t.Kind {
 			// we only care about const type
 			case types.DeclarationOf:
 				// Only some structs can be keys in a map. This is triggered by the line
 				// // +ErrCode=Rbd,Common
 				tags := extractTags(errCodeTag, t.CommentLines)
-				// fmt.Printf("\t**name = %+v, **%+v, tags = %+v, len(tags)=%v, t.ConstValue = %#v, type(t.ConstValue) = %T\n", t.Name.Name, t.Name, tags, len(tags), t.ConstValue, t.ConstValue)
 				if len(tags) == 0 {
 					return false
 				}
@@ -139,17 +124,8 @@ func (g *errCodeGen) Namers(c *generator.Context) namer.NameSystems {
 }
 
 func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
-	// typesMap= map[types.Name]generators.constTypeInfo{
-	//     types.Name{Package:"k8s.io/gengo/examples/error-code/inputs", Name:"ErrCodeRbdVolumeBegin", Path:""}:generators.constTypeInfo{tag:"Rbd,Volume", name:"ErrCodeRbdVolumeBegin", val:0, t:(*types.Type)(0xc0000e63c0)},
-	//     types.Name{Package:"k8s.io/gengo/examples/error-code/inputs", Name:"ErrCodeRbdVolumeEnd", Path:""}:generators.constTypeInfo{tag:"Rbd,Volume", name:"ErrCodeRbdVolumeEnd", val:3, t:(*types.Type)(0xc0000e6780)},
-	//     types.Name{Package:"k8s.io/gengo/examples/error-code/inputs", Name:"ErrCodeRbdVolumeUnknownParameter", Path:""}:generators.constTypeInfo{tag:"Rbd,Volume", name:"ErrCodeRbdVolumeUnknownParameter", val:1, t:(*types.Type)(0xc0000e6d80)}
-	//     types.Name{Package:"k8s.io/gengo/examples/error-code/inputs", Name:"ErrCodeRbdVolume", Path:""}:generators.constTypeInfo{tag:"Rbd", name:"ErrCodeRbdVolume", val:2, t:(*types.Type)(0xc0017c7d40)},
-	//     types.Name{Package:"k8s.io/gengo/examples/error-code/inputs", Name:"ErrCodeRbd", Path:""}:generators.constTypeInfo{tag:"", name:"ErrCodeRbd", val:2, t:(*types.Type)(0xc0017c7080)},
-	// }
-	fmt.Printf("\n%%$$$$typesMap= %#v\n", typesMap)
 	rootNodeMap := make(map[string]*node)
 	for _, info := range typesMap {
-		// fmt.Printf("\n**type = %#v, info = %#v\n", t, info)
 		// module
 		if info.tag == "" {
 			module := strings.TrimPrefix(info.name, errCodeTag)
@@ -158,7 +134,6 @@ func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
 			} else if !rootNodeMap[module].hasValue() {
 				rootNodeMap[module].setValue(info.val.(int64))
 			}
-			// fmt.Printf("\t&&&Create a module node: %#v\n", rootNodeMap[module])
 		} else if strings.Index(info.tag, ",") == -1 {
 			if _, ok := rootNodeMap[info.tag]; !ok {
 				rootNodeMap[info.tag] = newRootNode(info.tag, -1)
@@ -171,10 +146,8 @@ func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
 				if subModuleNode, existed = rootNodeMap[info.tag].child(subModuleName); !existed {
 					subModuleNode = newInterNode(subModuleName, info.val.(int64),
 						rootNodeMap[info.tag])
-					// fmt.Printf("\t\t&&&Create a sub module node: %#v\n", subModuleNode)
 				} else if !subModuleNode.hasValue() {
 					subModuleNode.setValue(info.val.(int64))
-					// fmt.Printf("\t\t&&&Set value of sub module node: %#v\n", subModuleNode)
 				}
 			} else if _, ok = info.val.(string); ok {
 				// +ErrCode=Common
@@ -193,10 +166,8 @@ func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
 				if subModuleNode, existed = rootNodeMap[info.tag].child(info.tag); !existed {
 					subModuleNode = newInterNode(info.tag, int64(subModVal),
 						rootNodeMap[info.tag])
-					// fmt.Printf("\t\t&&&Create a sub module node: %#v\n", subModuleNode)
 				} else if !subModuleNode.hasValue() {
 					subModuleNode.setValue(int64(subModVal))
-					// fmt.Printf("\t\t&&&Set value of sub module node: %#v\n", subModuleNode)
 				}
 			} else {
 				return fmt.Errorf("Invalid type of info value: %T", info.val)
@@ -221,36 +192,25 @@ func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
 				parent = newRootNode(modules[0], -1)
 				subModuleNode = newInterNode(modules[1], -1, parent)
 				rootNodeMap[modules[0]] = parent
-				// fmt.Printf("\t\t&&&Create a root node %#v and sub module node: %#v\n", parent, subModuleNode)
 			}
 			if subModuleNode, existed = parent.child(modules[1]); !existed {
 				subModuleNode = newInterNode(modules[1], -1, parent)
-				// fmt.Printf("\t\t&&&Create a sub module node: %#v\n", subModuleNode)
 			}
 			newLeafNode(info.name, info.val.(int64), subModuleNode)
-			// leafNode := newLeafNode(info.name, info.val.(int64), subModuleNode)
-			// fmt.Printf("\t\t\t&&&Create a leaf node: %#v\n", leafNode)
 		}
 	}
 	for k, v := range rootNodeMap {
-		// fmt.Printf("\n***rootNodeMap[key=%#v, value = %#v]\n", k, v)
 		nodeStr, err := getString(v, "", true)
 		if err != nil {
-			fmt.Printf("\n***the error is %#v\n", err)
+			fmt.Printf("the error is %#v\n", err)
 		}
-		fmt.Printf("\n***rootNodeMap[key=%#v, value = \n%s]\n", k, nodeStr)
-
-		fmt.Println("\n##################################")
-		// for i, n := range v.getLeaves() {
-		// 	fmt.Printf("---> %d, %#v\n", i+1, n)
-		// }
-
+		fmt.Println("#################################################################")
+		fmt.Printf("rootNodeMap[key=%#v, value = \n%s]\n", k, nodeStr)
 	}
 	errCodes := make(map[string]errCodeDesc)
+	var mod, subMod int64
 	for _, v := range rootNodeMap {
 		for _, n := range v.getLeaves() {
-			// fmt.Printf("***The length of leaves: %d\n", len(v.getLeaves()))
-			var mod, subMod int64
 			subModuleNode := n.getParent()
 			subMod = subModuleNode.getValue()
 			moduleNode := subModuleNode.getParent()
@@ -261,12 +221,14 @@ func (g *errCodeGen) Finalize(c *generator.Context, w io.Writer) (err error) {
 		}
 	}
 
-	fmt.Println(errCodes)
+	// fmt.Println(errCodes)
 	var codeBytes []byte
 	if codeBytes, err = json.MarshalIndent(errCodes, "", "\t"); err != nil {
-		return nil
+		return err
 	}
-	w.Write(codeBytes)
+	if _, err = w.Write(codeBytes); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -364,7 +326,6 @@ func getString(n *node, prefix string, isTail bool) (string, error) {
 				return "", err
 			}
 		} else {
-			// buffer.WriteString(getString(child, prefix+"   ", false))
 			s, err := getString(child, prefix+"   ", false)
 			if err != nil {
 				return "", err
@@ -377,21 +338,6 @@ func getString(n *node, prefix string, isTail bool) (string, error) {
 	}
 	return buffer.String(), nil
 }
-
-// func (n *node) String() string {
-// 	if n.isLeaf {
-// 		return fmt.Sprintf("\t---Leaf[name = %s, value = %d]", n.name, n.val)
-// 	}
-// 	var s string
-// 	if n.isRoot {
-// 		s = fmt.Sprintf("Root[name = %s, value = %d]\n", n.name, n.val)
-// 	}
-// 	for _, child := range n.children {
-// 		s = fmt.Sprintf("%s\tIntermediate[name = %s, value = %d], --> %s\n", s, child.name, child.val, child.String())
-// 		// s = fmt.Sprintf("%s\n\t%s", s, child.String())
-// 	}
-// 	return s
-// }
 
 func newRootNode(name string, val int64) *node {
 	return &node{
@@ -435,9 +381,7 @@ func jsonFormat(b []byte) ([]byte, error) {
 }
 
 func jsonAssemble(w io.Writer, f *generator.File) {
-	// fmt.Fprintf(w, "{\n")
 	w.Write(f.Body.Bytes())
-	// fmt.Fprintf(w, "}")
 }
 
 type jsonFile struct {

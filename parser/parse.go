@@ -93,8 +93,6 @@ type parsedFile struct {
 type fileLine struct {
 	file string
 	line int
-	// posFile string
-	// pos     int
 }
 
 // New constructs a new builder.
@@ -215,7 +213,6 @@ func (b *Builder) addFile(pkgPath importPathString, path string, src []byte, use
 			declScope{position.Line, endPosition.Line})
 	}
 	for _, c := range p.Comments {
-		// position := b.fset.Position(c.Pos())
 		endPosition := b.fset.Position(c.End())
 		b.endLineToCommentGroup[fileLine{endPosition.Filename, endPosition.Line}] = c
 		b.commentLines[endPosition.Filename] = append(b.commentLines[endPosition.Filename], endPosition.Line)
@@ -344,7 +341,6 @@ func (b *Builder) addDir(dir string, userRequested bool) error {
 		files = append(files, buildPkg.TestGoFiles...)
 	}
 
-	// fmt.Printf("**files=%+v\n", files)
 	for _, file := range files {
 		if !strings.HasSuffix(file, ".go") {
 			continue
@@ -545,7 +541,6 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 	}
 
 	s := pkg.Scope()
-	// fmt.Printf("**Scope.Names = %+v\n", s.Names())
 	for _, n := range s.Names() {
 		obj := s.Lookup(n)
 		tn, ok := obj.(*tc.TypeName)
@@ -577,7 +572,6 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 		if ok && !tv.IsField() {
 			t := b.addVariable(*u, nil, tv)
 			c1 := b.parseCommentLines(obj.Pos())
-			// fmt.Printf("=======c1 = %+v, comments = %+v\n", c1, c1.Text())
 			t.CommentLines = splitLines(c1.Text())
 		}
 		tconst, ok := obj.(*tc.Const)
@@ -588,16 +582,10 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 			//     ErrCodeRbdCommon = iota + 1
 			//     ErrCodeRbdVolume
 			//     ErrCodeRbdSnapshot
-			//     ErrCodeRbdVolumeMigration
-			//     ErrCodeRbdReplication
 			//     ErrCodeRbdTrash
 			// )
-
-			// fmt.Printf("\n\n*****tconst = %#v\n", tconst)
 			t := b.addConstant(*u, nil, tconst)
 			c1 := b.parseCommentLines(obj.Pos())
-			// comments := splitLines(c1.Text())
-			// fmt.Printf("***Comments = %+v, len(comments) = %v\n", comments, len(comments))
 			t.CommentLines = splitLines(c1.Text())
 		}
 	}
@@ -653,7 +641,6 @@ func (b *Builder) findCommentLine(fileName string, line int) int {
 				break
 			}
 		}
-		// fmt.Printf("***!!!Failed to find declaration scope of %s in line %d\n", fileName, line)
 	}
 	if commentLines, ok := b.commentLines[fileName]; ok {
 		// comments on the previous line of declartion scope
@@ -734,7 +721,6 @@ func (b *Builder) convertSignature(u types.Universe, t *tc.Signature) *types.Sig
 // walkType adds the type, and any necessary child types.
 func (b *Builder) walkType(u types.Universe, useName *types.Name, in tc.Type) *types.Type {
 	// Most of the cases are underlying types of the named type.
-	// fmt.Printf("***tc.Type.String = %#v, %v\n", in, in.String())
 	name := tcNameToName(in.String())
 	if useName != nil {
 		name = *useName
@@ -910,12 +896,10 @@ func (b *Builder) addConstant(u types.Universe, useName *types.Name, in *tc.Cons
 	if useName != nil {
 		name = *useName
 	}
-	// fmt.Printf("$$$$#### name = %#v\n", name)
 	out := u.Constant(name)
 	out.Kind = types.DeclarationOf
 	out.Underlying = b.walkType(u, nil, in.Type())
 	out.ConstValue = constant.Val(in.Val())
-	// fmt.Printf("$$$$#### out = %#v, underlying = %#v, constValue = %#v, %T\n", out, out.Underlying, out.ConstValue, out.ConstValue)
 	return out
 }
 

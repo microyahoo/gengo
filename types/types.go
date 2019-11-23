@@ -16,9 +16,7 @@ limitations under the License.
 
 package types
 
-import (
-	"strings"
-)
+import "strings"
 
 // Ref makes a reference to the given type. It can only be used for e.g.
 // passing to namers.
